@@ -98,7 +98,7 @@
 </head>
 <body>
     <div class="container">
-        <h1>🔌 WebSocket Test - Currency Rates</h1>
+        <h1>WebSocket Test - Currency Rates</h1>
         
         <div class="controls">
             <button id="connectBtn" class="connect" onclick="connect()">Подключиться</button>
@@ -138,14 +138,14 @@
 
         function updateStatus(connected) {
             if (connected) {
-                statusDiv.textContent = '✅ Подключено';
+                statusDiv.textContent = 'Подключено';
                 statusDiv.className = 'status connected';
                 connectBtn.disabled = true;
                 disconnectBtn.disabled = false;
                 sendBtn.disabled = false;
                 messageInput.disabled = false;
             } else {
-                statusDiv.textContent = '❌ Отключено';
+                statusDiv.textContent = 'Отключено';
                 statusDiv.className = 'status disconnected';
                 connectBtn.disabled = false;
                 disconnectBtn.disabled = true;
