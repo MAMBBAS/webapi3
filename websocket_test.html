@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebSocket Test - Currency Rates</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+        }
+        .controls {
+            margin-bottom: 20px;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .connect {
+            background-color: #4CAF50;
+            color: white;
+        }
+        .disconnect {
+            background-color: #f44336;
+            color: white;
+        }
+        .send {
+            background-color: #2196F3;
+            color: white;
+        }
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        .connected {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .disconnected {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        .messages {
+            height: 400px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            padding: 10px;
+            background-color: #f9f9f9;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        .message {
+            margin: 5px 0;
+            padding: 5px;
+            border-left: 3px solid #2196F3;
+            background-color: white;
+        }
+        .message.error {
+            border-left-color: #f44336;
+        }
+        .message.success {
+            border-left-color: #4CAF50;
+        }
+        .timestamp {
+            color: #666;
+            font-size: 10px;
+        }
+        input[type="text"] {
+            padding: 8px;
+            width: 300px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔌 WebSocket Test - Currency Rates</h1>
+        
+        <div class="controls">
+            <button id="connectBtn" class="connect" onclick="connect()">Подключиться</button>
+            <button id="disconnectBtn" class="disconnect" onclick="disconnect()" disabled>Отключиться</button>
+            <input type="text" id="messageInput" placeholder="Введите сообщение (JSON)" disabled>
+            <button id="sendBtn" class="send" onclick="sendMessage()" disabled>Отправить</button>
+        </div>
+        
+        <div id="status" class="status disconnected">Отключено</div>
+        
+        <h3>Сообщения:</h3>
+        <div id="messages" class="messages"></div>
+    </div>
+
+    <script>
+        let ws = null;
+        const messagesDiv = document.getElementById('messages');
+        const statusDiv = document.getElementById('status');
+        const connectBtn = document.getElementById('connectBtn');
+        const disconnectBtn = document.getElementById('disconnectBtn');
+        const sendBtn = document.getElementById('sendBtn');
+        const messageInput = document.getElementById('messageInput');
+
+        function addMessage(message, type = 'info') {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${type}`;
+            
+            const timestamp = new Date().toLocaleTimeString();
+            messageDiv.innerHTML = `
+                <span class="timestamp">[${timestamp}]</span><br>
+                <pre>${JSON.stringify(message, null, 2)}</pre>
+            `;
+            
+            messagesDiv.appendChild(messageDiv);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        function updateStatus(connected) {
+            if (connected) {
+                statusDiv.textContent = '✅ Подключено';
+                statusDiv.className = 'status connected';
+                connectBtn.disabled = true;
+                disconnectBtn.disabled = false;
+                sendBtn.disabled = false;
+                messageInput.disabled = false;
+            } else {
+                statusDiv.textContent = '❌ Отключено';
+                statusDiv.className = 'status disconnected';
+                connectBtn.disabled = false;
+                disconnectBtn.disabled = true;
+                sendBtn.disabled = true;
+                messageInput.disabled = true;
+            }
+        }
+
+        function connect() {
+            const wsUrl = 'ws://localhost:8000/ws/items';
+            ws = new WebSocket(wsUrl);
+
+            ws.onopen = function() {
+                addMessage({ type: 'connection', message: 'WebSocket подключен' }, 'success');
+                updateStatus(true);
+            };
+
+            ws.onmessage = function(event) {
+                try {
+                    const data = JSON.parse(event.data);
+                    addMessage(data, 'info');
+                } catch (e) {
+                    addMessage({ error: 'Неверный формат JSON', raw: event.data }, 'error');
+                }
+            };
+
+            ws.onerror = function(error) {
+                addMessage({ type: 'error', message: 'Ошибка WebSocket', error: error }, 'error');
+            };
+
+            ws.onclose = function() {
+                addMessage({ type: 'connection', message: 'WebSocket отключен' }, 'error');
+                updateStatus(false);
+            };
+        }
+
+        function disconnect() {
+            if (ws) {
+                ws.close();
+                ws = null;
+            }
+        }
+
+        function sendMessage() {
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                const message = messageInput.value;
+                if (message.trim()) {
+                    try {
+                        // Попытка парсинга JSON
+                        JSON.parse(message);
+                        ws.send(message);
+                        addMessage({ type: 'sent', message: JSON.parse(message) }, 'success');
+                        messageInput.value = '';
+                    } catch (e) {
+                        // Отправка как обычный текст
+                        ws.send(message);
+                        addMessage({ type: 'sent', message: message }, 'success');
+                        messageInput.value = '';
+                    }
+                }
+            }
+        }
+
+        // Отправка по Enter
+        messageInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+    </script>
+</body>
+</html>
+
+
