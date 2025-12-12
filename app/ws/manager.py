@@ -10,18 +10,18 @@ class ConnectionManager:
     async def connect(self, websocket: WebSocket):
         await websocket.accept()
         self.active_connections.append(websocket)
-        print(f"✅ WebSocket подключен. Всего подключений: {len(self.active_connections)}")
+        print(f"WebSocket подключен. Всего подключений: {len(self.active_connections)}")
     
     def disconnect(self, websocket: WebSocket):
         if websocket in self.active_connections:
             self.active_connections.remove(websocket)
-        print(f"❌ WebSocket отключен. Всего подключений: {len(self.active_connections)}")
+        print(f"WebSocket отключен. Всего подключений: {len(self.active_connections)}")
     
     async def send_personal_message(self, message: dict, websocket: WebSocket):
         try:
             await websocket.send_text(json.dumps(message))
         except Exception as e:
-            print(f"❌ Ошибка отправки сообщения: {e}")
+            print(f"Ошибка отправки сообщения: {e}")
             self.disconnect(websocket)
     
     async def broadcast(self, message: dict):
@@ -30,7 +30,7 @@ class ConnectionManager:
             try:
                 await connection.send_text(json.dumps(message))
             except Exception as e:
-                print(f"❌ Ошибка broadcast: {e}")
+                print(f"Ошибка broadcast: {e}")
                 disconnected.append(connection)
         
         for conn in disconnected:

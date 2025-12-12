@@ -21,7 +21,7 @@ async def websocket_endpoint(websocket: WebSocket):
             data = await websocket.receive_text()
             try:
                 message = json.loads(data)
-                print(f"📨 Получено сообщение от клиента: {message}")
+                print(f"Получено сообщение от клиента: {message}")
                 
                 # Эхо-ответ
                 await ws_manager.send_personal_message({

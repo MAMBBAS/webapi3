@@ -10,10 +10,10 @@ from app.tasks.background_task import background_task
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    print("🚀 Запуск приложения...")
+    print("Запуск приложения...")
     
     await init_db()
-    print("✅ База данных инициализирована")
+    print("База данных инициализирована")
     
     await nats_client.connect()
     
@@ -25,16 +25,16 @@ async def lifespan(app: FastAPI):
     task = asyncio.create_task(background_task.start_periodic())
     background_task.task = task
     
-    print("✅ Приложение запущено")
-    print("📖 API документация: http://localhost:8000/docs")
-    print("🔌 WebSocket: ws://localhost:8000/ws/items")
+    print("Приложение запущено")
+    print("API документация: http://localhost:8000/docs")
+    print("WebSocket: ws://localhost:8000/ws/items")
     
     yield
     
-    print("⏹️ Остановка приложения...")
+    print("Остановка приложения...")
     await background_task.stop()
     await nats_client.disconnect()
-    print("✅ Приложение остановлено")
+    print("Приложение остановлено")
 
 
 app = FastAPI(
